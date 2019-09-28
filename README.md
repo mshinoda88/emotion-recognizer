@@ -1,7 +1,6 @@
 # emotion-recognizer
 Predict the emotional state of people in an image from their facial expressions
 
-
 ## Requirements
 
 ```bash
@@ -11,11 +10,10 @@ pip install -r requirements.txt
 ## Installation
 ```bash
 cd conf/emotion-recognizer/ 
-wget https://storage.cloud.google.com/public_teamml/cnn/emotion-recognizer/_mini_XCEPTION.102-0.66.hdf5
+bash download.sh
 
-cd conf/face-detect
-wget https://storage.cloud.google.com/public_teamml/cnn/face-detect/yolov3-wider_16000.weights
-wget https://storage.cloud.google.com/public_teamml/cnn/face-detect/yolov3-face.cfg
+cd ../face-detect
+bash download.sh
 ```
 
 
@@ -26,6 +24,12 @@ wget https://storage.cloud.google.com/public_teamml/cnn/face-detect/yolov3-face.
 cd src
 python face_detector.py
 ```
+
+元画像<br>
+<img src="https://d-dtc.backlog.com/git/CAMP_TASK/emotion-detector/blob/master/data/inputs/pict01.png" size=50%>
+
+処理後の画像<br>
+<img src="https://d-dtc.backlog.com/git/CAMP_TASK/emotion-detector/blob/master/data/outputs/pict01_yoloface.jpg" size=50%>
 
 - Face Emotion Recognizer
 

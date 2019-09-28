@@ -1,6 +1,6 @@
 # ライブラリのロード
 import numpy as np
-import os
+import os,sys
 from ImageUtil import *
 
 
@@ -18,13 +18,25 @@ class FaceDetector:
     # input
     #   conf_dir   設定ファイルのディレクトリ
     def __init__(self, conf_dir):
+        print("conf_dir",conf_dir)
         self.model_cfg = conf_dir + '/yolov3-face.cfg'
         self.model_weights = conf_dir + '/yolov3-wider_16000.weights'
+        # ファイルの存在チェック
+        if os.path.isfile(self.model_cfg) == False:
+            print("File Not Found:",self.model_cfg)
+            sys.exit()
+        if os.path.isfile(self.model_weights) == False:
+            print("File Not Found:",self.model_weights)
+            sys.exit()
         #print("model_cfg:",self.model_cfg)
         #print("model_weights:",self.model_weights)
         self.net = cv2.dnn.readNetFromDarknet(self.model_cfg, self.model_weights)
         self.net.setPreferableBackend(cv2.dnn.DNN_BACKEND_OPENCV)
         self.net.setPreferableTarget(cv2.dnn.DNN_TARGET_CPU)
+        # ディレクトリの存在チェック
+        if os.path.isdir(conf_dir) == False:
+            print("Directory Not Found:",conf_dir)
+            sys.exit()
 
 
     # 画像から顔の位置情報を返します。
@@ -76,10 +88,21 @@ class FaceDetector:
     # input
     #   image_path 入力画像のパス
     #   faces_bbox_ary 顔のバウンディングボックス配列
-    #   output_dir 出力先のディレクトリ
+    #   output_path    出力先のファイルパス
     # output
     #   なし
     def put_caption(self, image_path, faces_bbox_ary, output_path):
+        # ファイルの存在チェック
+        if os.path.isfile(image_path) == False:
+            print("File Not Found:",image_path)
+            return
+
+        # ディレクトリの存在チェック
+        dir_output = os.path.dirname(output_path)
+        if os.path.isdir(dir_output) == False:
+            print("Directory Not Found:",output_path)
+            return
+
         frame = self.frame
         info = [('number of faces detected','{}'.format(len(faces_bbox_ary)))]
         for (i,(txt,val)) in enumerate(info):
@@ -97,6 +120,15 @@ class FaceDetector:
     #   出力ファイルのパスを生成して返します
     @classmethod
     def generate_outpath(self, image_path, output_dir):
+        # ファイルの存在チェック
+        if os.path.isfile(image_path) == False:
+            print("File Not Found:",image_path)
+            return
+
+        # ディレクトリの存在チェック
+        if os.path.isdir(output_dir) == False:
+            print("Directory Not Found:",output_dir)
+
         output_file = image_path[:-4].rsplit('/')[-1] + '_yoloface.jpg'
         output_path = os.path.join(output_dir, output_file)
         return output_path
@@ -181,8 +213,7 @@ if __name__ == "__main__":
     image_path="../data/inputs/meeting_11_304.jpg"
     face_detector = FaceDetector(conf_dir)
     faces = face_detector.detect_face(image_path)
-    if len(faces)>0:
-        output_path = FaceDetector.generate_outpath(image_path, output_dir)
-        print("output_path",output_path)
-        face_detector.put_caption(image_path, faces, output_path)
+    output_path = FaceDetector.generate_outpath(image_path, output_dir)
+    print("output path:",output_path)
+    face_detector.put_caption(image_path, faces, output_path)
 

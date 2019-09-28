@@ -4,7 +4,9 @@ import os,sys
 import cv2
 from face_detector import FaceDetector
 from ImageUtil import BBox
+import cv2
 import time
+import sys
 
 # 画像から表情を検知する機能を提供するクラス
 #
@@ -24,6 +26,14 @@ class EmotionRecognizer:
         self.recognizer = load_model(self.recognizer_path)
         self.emotions = ['angry','disgust','scared','happy','sad','surprised',
                          'neutral']
+        # ディレクトリの存在チェック
+        if os.path.isdir(conf_dir) == False:
+            print("Directory Not Found:",conf_dir)
+            sys.exit()
+        if os.path.isdir(output_dir) == False:
+            print("Directory Not Found:",output_dir)
+            sys.exit()
+
 
     # 画像から表情を数値で返します。
     #
@@ -33,15 +43,17 @@ class EmotionRecognizer:
     #              バウンディングボックスBBox [left,top,width,height] の配列 
     # output
     #   ret_emotions  表情を表す数値
-    def classify_emotion(self, img_path, boxes):
+    def classify_emotion(self, image_path, boxes):
         # ファイルの存在チェック
-        if os.path.isfile(img_path) == False:
-            print("File Not Found:",img_path)
+        if os.path.isfile(image_path) == False:
+            print("File Not Found:",image_path)
             return []
 
         if len(boxes)==0:
             return []
-        img = cv2.imread(img_path)
+
+        img = cv2.imread(image_path)
+        #print("box size",len(boxes))
 
         # グレースケールに変換した画像データ
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -67,15 +79,22 @@ class EmotionRecognizer:
     #   emotions   感情推定値のベクトル配列
     # output
     #   なし
-    def put_caption(self, img_path, boxes, emotions):
-        img = cv2.imread(img_path)
-        if len(boxes) == 0:
-            try:
-                cv2.putText(img,'NO FACE',(640,360),
-                  cv2.FONT_HERSHEY_SIMPLEX,3.0,(0,255,0),lineType=cv2.LINE_AA)    
-            except Exception as e:
-                print("putText got exception:")
-                print(e)
+    def put_caption(self, image_path, boxes, emotions):
+        # ファイルの存在チェック
+        if os.path.isfile(image_path) == False:
+            print("File Not Found:",image_path)
+            return
+
+        if len(boxes)==0 or len(emotions)==0:
+            return
+
+        img = cv2.imread(image_path)
+        try:
+            cv2.putText(img,'NO FACE',(640,360),
+              cv2.FONT_HERSHEY_SIMPLEX,3.0,(0,255,0),lineType=cv2.LINE_AA)    
+        except Exception as e:
+            print("putText got exception:")
+            print(e)
 
         for emotion,box in zip(emotions, boxes):
             top,left,bottom,right,width,height = box.top,box.left,box.bottom,box.right,box.width,box.height
@@ -92,7 +111,7 @@ class EmotionRecognizer:
                 print("putText got exception:")
                 print(e)
 
-        img_dir,img_name = os.path.split(img_path)
+        img_dir,img_name = os.path.split(image_path)
         save_path = os.path.join(self.output_dir, img_name)
         cv2.imwrite(save_path, img)
 
@@ -194,15 +213,12 @@ if __name__ == "__main__":
     output_dir="../data/outputs"
     face_detect_conf_dir="../conf/face-detect"
     erecognizer_conf_dir="../conf/emotion-recognizer"
-    image_path="../data/inputs/sand01.jpg"
-    print("input image path",image_path)
+    image_path="../data/inputs/meeting_11_304.jpg"
     face_detector = FaceDetector(face_detect_conf_dir)
     box_faces = face_detector.detect_face(image_path)
-    print(box_faces)
-    if len(box_faces)>0:
-        emotion_recognizer = EmotionRecognizer(erecognizer_conf_dir, 416, output_dir)
-        ret_emotions = emotion_recognizer.classify_emotion(image_path, box_faces)
-        print("ret_emotions",ret_emotions)
-        emotion_recognizer.put_caption(image_path, box_faces, ret_emotions)
+
+    emotion_recognizer = EmotionRecognizer(erecognizer_conf_dir, 416, output_dir)
+    ret_emotions = emotion_recognizer.classify_emotion(image_path, box_faces)
+    emotion_recognizer.put_caption(image_path, box_faces, ret_emotions)
 
 
